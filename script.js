@@ -271,6 +271,23 @@ function showSummary(record) {
     if (record.delta > previousDelta) { trendLabel = "Improved"; trendColor = "#00FF00"; }
     else if (record.delta < previousDelta) { trendLabel = "Declined"; trendColor = "#FFFF00"; }
     else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
+
+    // Images display in summary
+    let imagesHTML = "";
+      if (record.images && record.images.length) {
+        imagesHTML = `
+          <p><strong>Images:</strong></p>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        ${record.images.map(src => `
+            <img src="${src}" 
+             style="width:90px;height:90px;
+             object-fit:cover;border-radius:6px;
+             border:1px solid #444;">
+      `).join("")}
+    </div>
+  `;
+}
+
   }
 
   // Overall progress
@@ -321,6 +338,8 @@ function showSummary(record) {
     <ul>${record.accomplishments?.map(a => `<li>${a}</li>`).join("") || ""}</ul>
 
     <p><strong>Tools Used:</strong> ${record.tools?.join(", ") || ""}</p>
+
+    ${imagesHTML}
   `;
 }
 
@@ -376,6 +395,26 @@ function loadReflectionViewer() {
 
     const div = document.createElement("div");
     div.className = "reflection-item";
+let imagesHTML = "";
+if (r.images && r.images.length) {
+  imagesHTML = `
+    <div class="dtr-images" style="
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:6px;">
+      ${r.images.map(src => `
+        <img src="${src}" 
+             style="
+              width:70px;
+              height:70px;
+              object-fit:cover;
+              border-radius:5px;
+              border:1px solid #555;">
+      `).join("")}
+    </div>
+  `;
+}
     div.innerHTML = `
       <strong>${i + 1}. ${r.date}</strong>
       <p>${r.reflection}</p>
@@ -384,6 +423,7 @@ function loadReflectionViewer() {
         Delta: <span style="color:${deltaColor}">${r.delta.toFixed(2)}</span> |
         Trend: <span style="color:${trendColor}">${trendLabel}</span>
       </small>
+      ${imagesHTML}
       <hr>
     `;
     viewer.appendChild(div);
@@ -412,35 +452,6 @@ function loadReflectionViewer() {
     visualizer.appendChild(daySquare);
   });
 }
-
-// Display reflections with images
-dailyRecords.forEach((r, i) => {
-  const div = document.createElement("div");
-  div.className = "reflection-item";
-  div.innerHTML = `
-    <strong>${i + 1}. ${r.date}</strong>
-    <p>${r.reflection}</p>
-    <small>
-      Hours: ${r.hours} | Delta: <span style="color:${deltaColor}">${r.delta.toFixed(2)}</span>
-    </small>
-    <div class="dtr-images" style="display:flex; gap:5px; flex-wrap:wrap; margin-top:5px;"></div>
-    <hr>
-  `;
-  
-  const imagesDiv = div.querySelector(".dtr-images");
-  r.images.forEach(src => {
-    const img = document.createElement("img");
-    img.src = src;
-    img.style.width = "80px";
-    img.style.height = "80px";
-    img.style.objectFit = "cover";
-    img.style.borderRadius = "5px";
-    imagesDiv.appendChild(img);
-  });
-
-  viewer.appendChild(div);
-});
-
 
 // === EXPORT PDF FUNCTIONS ===
 function exportPDF() {
