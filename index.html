@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Custom DTR – Delta Time System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- DTR Header / Label -->
+  <div class="card">
+    <h1>Custom Daily Time Record (DTR)</h1>
+    <p class="subtitle">
+      Formula 1 Delta System • Target-Based Productivity Telemetry
+    </p>
+  </div>
+
+  <!-- Theme Switcher -->
+  <div class="card">
+    <h2>DTR Theme</h2>
+    <button onclick="setTheme('f1')">F1 Theme</button>
+    <button onclick="setTheme('light')">Light</button>
+    <button onclick="setTheme('dark')">Dark</button>
+  </div>
+
+  <!-- DTR Input Form -->
+  <div class="card">
+    <h2>Session Input</h2>
+
+    <div class="step">
+      <label for="date">DTR Date</label>
+      <input type="date" id="date">
+    </div>
+
+    <div class="step">
+      <label for="hours">Hours Worked</label>
+      <input type="number" id="hours" placeholder="e.g. 8">
+    </div>
+
+    <p id="weeklyCounter"></p>
+
+    <div class="step">
+      <label for="reflection">Daily Reflection</label>
+      <textarea id="reflection" placeholder="What did you learn today?"></textarea>
+    </div>
+
+    <div class="step">
+      <label for="accomplishments">Accomplishments (one per line)</label>
+      <textarea id="accomplishments"
+        placeholder="Implemented UI&#10;Fixed bug in script"></textarea>
+    </div>
+
+    <div class="step">
+      <label for="tools">Tools Used (comma separated)</label>
+      <input type="text" id="tools" placeholder="VS Code, Chrome, Git">
+    </div>
+
+    <button onclick="submitDTR()">Save Day</button>
+    <button class="danger" onclick="deleteLastRecord()">Delete Last Entry</button>
+    <button class="danger" onclick="clearAllRecords()">Clear All Records</button>
+  </div>
+
+  <!-- Session Summary Preview -->
+  <div id="summary" class="card summary" style="display:none;"></div>
+
+  <!-- ===================== -->
+  <!-- REFLECTION VIEWER -->
+  <!-- ===================== -->
+
+
+  <div class="card">
+    <h2>Reflection Viewer</h2>
+    <p class="subtitle">All saved reflections for quick review & export</p>
+
+    <div id="reflectionViewer" class="viewer-box">
+      <p class="empty">No reflections saved yet.</p>
+    </div>
+
+    <div class="viewer-actions">
+      <button onclick="exportPDF()">Export All DTRs (PDF)</button>
+      <button onclick="exportWeeklyPDF()">Export Weekly DTR (PDF)</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- FileSaver (needed for docx) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
