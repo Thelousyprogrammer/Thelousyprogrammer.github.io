@@ -1,7 +1,7 @@
 // === CONFIG ===
 const MASTER_TARGET_HOURS = 500;   // Total OJT goal
 const DAILY_TARGET_HOURS = 8;      // Reference time per day
-const GREAT_DELTA_THRESHOLD = 2;  // -2 hours or more is "great"
+const GREAT_DELTA_THRESHOLD = 2;  // 2 hours or more is "great"
 
 // === DAILY RECORD MODEL ===
 class DailyRecord {
@@ -102,14 +102,129 @@ function submitDTR() {
   const date = document.getElementById("date").value;
   const hours = parseFloat(document.getElementById("hours").value);
   const reflection = document.getElementById("reflection").value;
-  const accomplishments = document.getElementById("accomplishments")
-    .value.split("\n").filter(a => a.trim() !== "");
-  const tools = document.getElementById("tools")
-    .value.split(",").map(t => t.trim()).filter(t => t !== "");
 
-  const record = new DailyRecord(date, hours, reflection, accomplishments, tools);
-  saveDailyRecord(record);
-  alert("Daily DTR saved!");
+  if (!date || isNaN(hours)) {
+    alert("Please enter a valid date and number of hours.");
+    return;
+  }
+
+  const accomplishments = document.getElementById("accomplishments").value
+    .split("\n")
+    .filter(a => a.trim() !== "");
+
+  const tools = document.getElementById("tools").value
+    .split(",")
+    .map(t => t.trim())
+    .filter(t => t !== "");
+
+  const files = Array.from(document.getElementById("images").files);
+  const images = [];
+
+  if (files.length > 0) {
+    let loaded = 0;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        images.push(e.target.result);
+        loaded++;
+        if (loaded === files.length) {
+          saveRecord(date, hours, reflection, accomplishments, tools, images);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  } else {
+    saveRecord(date, hours, reflection, accomplishments, tools, images);
+  }
+}
+
+// === CHECK DATE INTEGRITY ===
+function checkDateIntegrity(record) {
+  const existingRecords = dailyRecords.filter(r => r.date === record.date);
+
+  if (existingRecords.length === 0) {
+    // No conflict, safe to save
+    saveDailyRecord(record);
+    showSummary(record);
+    alert("Daily DTR saved!");
+    return;
+  }
+
+  if (existingRecords.length === 1) {
+    const choice = confirm(
+      `There is already a DTR entry for ${record.date}.\n` +
+      `Press OK to replace the original entry, or Cancel to keep it.`
+    );
+
+    if (choice) {
+      // Replace original
+      const index = dailyRecords.findIndex(r => r.date === record.date);
+      dailyRecords[index] = record;
+      localStorage.setItem("dtr", JSON.stringify(dailyRecords));
+      loadReflectionViewer();
+      showSummary(record);
+      alert("Original DTR replaced with new entry.");
+    } else {
+      // Keep original
+      alert("Original DTR kept. No changes made.");
+    }
+    return;
+  }
+
+  if (existingRecords.length > 1) {
+    let keepIndex = prompt(
+      `Multiple DTR entries found for ${record.date}.\n` +
+      `Enter the number (1-${existingRecords.length}) of the entry you want to keep:`
+    );
+
+    keepIndex = parseInt(keepIndex) - 1;
+    if (keepIndex >= 0 && keepIndex < existingRecords.length) {
+      // Remove others, keep selected
+      dailyRecords = dailyRecords.filter(r => !(r.date === record.date));
+      dailyRecords.push(existingRecords[keepIndex]); // keep selected
+      dailyRecords.push(record); // add new
+      dailyRecords.sort((a, b) => new Date(a.date) - new Date(b.date)); // keep order
+      localStorage.setItem("dtr", JSON.stringify(dailyRecords));
+      loadReflectionViewer();
+      showSummary(record);
+      alert("Duplicate entries resolved and new DTR saved.");
+    } else {
+      alert("Invalid selection. No changes made.");
+    }
+  }
+}
+
+// Separate function to save
+function saveRecord(date, hours, reflection, accomplishments, tools, images) {
+  const record = new DailyRecord(date, hours, reflection, accomplishments, tools, images);
+
+  dailyRecords.push(record);
+  localStorage.setItem("dtr", JSON.stringify(dailyRecords));
+
+  loadReflectionViewer();
+  showSummary(record);
+  updateWeeklyCounter(record.date);
+
+  clearDTRForm(); // 🔥 reset input after save
+  alert("Daily DTR saved and form cleared!");
+}
+
+// === CLEAR INPUT FORM ===
+function clearDTRForm() {
+  document.getElementById("date").value = "";
+  document.getElementById("hours").value = "";
+  document.getElementById("reflection").value = "";
+  document.getElementById("accomplishments").value = "";
+  document.getElementById("tools").value = "";
+
+  const imgInput = document.getElementById("images");
+  if (imgInput) imgInput.value = "";
+
+  const preview = document.getElementById("imagePreview");
+  if (preview) preview.innerHTML = "";
+
+  const weeklyCounter = document.getElementById("weeklyCounter");
+  if (weeklyCounter) weeklyCounter.innerHTML = "";
 }
 
 // === UPDATE WEEKLY COUNTER ===
@@ -118,9 +233,10 @@ function updateWeeklyCounter(dateInput) {
   const weekHours = weekNum ? getWeekHours(weekNum) : 0;
   const maxWeeklyHours = DAILY_TARGET_HOURS * 7;
 
-  let color = "#46d641"; // green
-  if (weekHours < maxWeeklyHours * 0.5) color = "#ff1e00"; // red
-  else if (weekHours < maxWeeklyHours) color = "#f8d305"; // yellow
+  let color = "#FFFFFF"; // default normal
+  if (weekHours < maxWeeklyHours * 0.5) color = "#FFFF00"; // lowest
+  else if (weekHours < maxWeeklyHours) color = "#00FF00"; // personal highest
+  else color = "#FF00FF"; // highest overall
 
   const counterEl = document.getElementById("weeklyCounter");
   if (counterEl) {
@@ -135,42 +251,45 @@ function showSummary(record) {
   const s = document.getElementById("summary");
   s.style.display = "block";
 
-  // Previous delta
+  if (!record || !record.date) {
+    s.innerHTML = `<h2>Session Delta Summary</h2><p>No record selected.</p>`;
+    return;
+  }
+
   const previousDelta = dailyRecords.length > 1
     ? dailyRecords[dailyRecords.length - 2].delta
     : 0;
 
-  // Delta color & label
-  let deltaColor = "#f8d305"; // yellow
-  let deltaLabel = "On target";
-
-  if (record.delta > GREAT_DELTA_THRESHOLD) { deltaColor = "#46d641"; deltaLabel = "Ahead of target"; }
-  if (record.delta <= 0) { deltaColor = "#ff1e00"; deltaLabel = "Below target"; }
+  // Delta color
+  let deltaColor = "#FFFFFF"; // normal
+  if (record.delta <= 0) deltaColor = "#FFFF00"; // lowest
+  else if (record.delta > GREAT_DELTA_THRESHOLD) deltaColor = "#00FF00"; // personal highest
 
   // Delta trend
-  let trendLabel = "No previous record", trendColor = "#f8d305";
+  let trendLabel = "No previous record", trendColor = "#FFFFFF";
   if (dailyRecords.length > 1) {
-    if (record.delta > previousDelta) { trendLabel = "Improved"; trendColor = "#46d641"; }
-    else if (record.delta < previousDelta) { trendLabel = "Declined"; trendColor = "#ff1e00"; }
-    else { trendLabel = "Same as before"; trendColor = "#f8d305"; }
+    if (record.delta > previousDelta) { trendLabel = "Improved"; trendColor = "#00FF00"; }
+    else if (record.delta < previousDelta) { trendLabel = "Declined"; trendColor = "#FFFF00"; }
+    else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
   }
 
   // Overall progress
   const totalHours = getTotalHours();
   let overallStatus = totalHours > MASTER_TARGET_HOURS
-    ? "OVER 500 HOURS LIMIT!" : `${totalHours} / ${MASTER_TARGET_HOURS} hours completed`;
-  let overallColor = totalHours > MASTER_TARGET_HOURS ? "#ff1e00" : "#46d641";
+    ? "OVER 500 HOURS LIMIT!" 
+    : `${totalHours} / ${MASTER_TARGET_HOURS} hours completed`;
+  let overallColor = (totalHours >= MASTER_TARGET_HOURS) ? "#FF00FF" : "#00FF00"; // highest vs personal
 
   // Weekly hours
   const weekNum = record.date ? getWeekNumber(new Date(record.date)) : null;
   const weekHours = weekNum ? getWeekHours(weekNum) : 0;
   const maxWeeklyHours = DAILY_TARGET_HOURS * 7;
 
-  let weekColor = "#46d641";
-  if (weekHours < maxWeeklyHours * 0.5) weekColor = "#ff1e00";
-  else if (weekHours < maxWeeklyHours) weekColor = "#f8d305";
+  let weekColor = "#FFFFFF"; // normal
+  if (weekHours < maxWeeklyHours * 0.5) weekColor = "#FFFF00"; // lowest
+  else if (weekHours < maxWeeklyHours) weekColor = "#00FF00"; // personal highest
+  else weekColor = "#FF00FF"; // highest overall
 
-  // Build HTML
   s.innerHTML = `
     <h2>Session Delta Summary</h2>
 
@@ -181,7 +300,6 @@ function showSummary(record) {
       <span style="color:${deltaColor}; font-weight:bold;">
         ${record.delta >= 0 ? "+" : ""}${record.delta?.toFixed(2) || "-"} hours
       </span>
-      <em>(${deltaLabel})</em>
     </p>
 
     <p><strong>Trend vs Previous:</strong>
@@ -216,22 +334,20 @@ function loadReflectionViewer() {
     return;
   }
 
-  // Determine current week (latest entry)
+  // Current week
   const latestDate = dailyRecords[dailyRecords.length - 1].date;
   const currentWeek = getWeekNumber(new Date(latestDate));
   const maxWeeklyHours = DAILY_TARGET_HOURS * 7;
 
-  // Calculate current week's total hours (stored only, do not add input hours)
   const currentWeekHours = dailyRecords
     .filter(r => getWeekNumber(new Date(r.date)) === currentWeek)
     .reduce((sum, r) => sum + r.hours, 0);
 
-  // Weekly counter color logic
-  let weekColor = "#46d641"; // green
-  if (currentWeekHours < maxWeeklyHours * 0.5) weekColor = "#ff1e00"; // red
-  else if (currentWeekHours < maxWeeklyHours) weekColor = "#f8d305"; // yellow
+  let weekColor = "#FFFFFF";
+  if (currentWeekHours < maxWeeklyHours * 0.5) weekColor = "#FFFF00";
+  else if (currentWeekHours < maxWeeklyHours) weekColor = "#00FF00";
+  else weekColor = "#FF00FF";
 
-  // Add counter at the top
   const counterDiv = document.createElement("div");
   counterDiv.id = "weeklyCounterViewer";
   counterDiv.style.marginBottom = "10px";
@@ -243,27 +359,19 @@ function loadReflectionViewer() {
   `;
   viewer.appendChild(counterDiv);
 
-  // Display individual entries
+  // Reflection items
   dailyRecords.forEach((r, i) => {
-    let deltaColor = "#f8d305"; // yellow default
-    if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = "#46d641"; // green
-    if (r.delta <= 0) deltaColor = "#ff1e00"; // red
+    let deltaColor = "#FFFFFF";
+    if (r.delta <= 0) deltaColor = "#FFFF00";
+    else if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = "#00FF00";
 
     let trendLabel = "No previous record";
-    let trendColor = "#f8d305";
-
+    let trendColor = "#FFFFFF";
     if (i > 0) {
       const prevDelta = dailyRecords[i - 1].delta;
-      if (r.delta > prevDelta) {
-        trendLabel = "Improved";
-        trendColor = "#46d641";
-      } else if (r.delta < prevDelta) {
-        trendLabel = "Declined";
-        trendColor = "#ff1e00";
-      } else {
-        trendLabel = "Same as before";
-        trendColor = "#f8d305";
-      }
+      if (r.delta > prevDelta) { trendLabel = "Improved"; trendColor = "#00FF00"; }
+      else if (r.delta < prevDelta) { trendLabel = "Declined"; trendColor = "#FFFF00"; }
+      else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
     }
 
     const div = document.createElement("div");
@@ -281,7 +389,7 @@ function loadReflectionViewer() {
     viewer.appendChild(div);
   });
 
-  // GitHub-style activity visualizer
+  // Activity visualizer
   const visualizer = document.createElement("div");
   visualizer.id = "activityVisualizer";
   visualizer.style.display = "flex";
@@ -296,14 +404,43 @@ function loadReflectionViewer() {
     daySquare.style.margin = "2px";
     daySquare.style.borderRadius = "3px";
 
-    if (r.delta > GREAT_DELTA_THRESHOLD) daySquare.style.backgroundColor = "#46d641";
-    else if (r.delta > 0) daySquare.style.backgroundColor = "#f8d305";
-    else daySquare.style.backgroundColor = "#ff1e00";
+    if (r.delta > GREAT_DELTA_THRESHOLD) daySquare.style.backgroundColor = "#00FF00";
+    else if (r.delta > 0) daySquare.style.backgroundColor = "#FFFF00";
+    else daySquare.style.backgroundColor = "#FFFFFF";
 
     daySquare.title = `${r.date} — ${r.delta >= 0 ? "+" : ""}${r.delta.toFixed(2)} hrs`;
     visualizer.appendChild(daySquare);
   });
 }
+
+// Display reflections with images
+dailyRecords.forEach((r, i) => {
+  const div = document.createElement("div");
+  div.className = "reflection-item";
+  div.innerHTML = `
+    <strong>${i + 1}. ${r.date}</strong>
+    <p>${r.reflection}</p>
+    <small>
+      Hours: ${r.hours} | Delta: <span style="color:${deltaColor}">${r.delta.toFixed(2)}</span>
+    </small>
+    <div class="dtr-images" style="display:flex; gap:5px; flex-wrap:wrap; margin-top:5px;"></div>
+    <hr>
+  `;
+  
+  const imagesDiv = div.querySelector(".dtr-images");
+  r.images.forEach(src => {
+    const img = document.createElement("img");
+    img.src = src;
+    img.style.width = "80px";
+    img.style.height = "80px";
+    img.style.objectFit = "cover";
+    img.style.borderRadius = "5px";
+    imagesDiv.appendChild(img);
+  });
+
+  viewer.appendChild(div);
+});
+
 
 // === EXPORT PDF FUNCTIONS ===
 function exportPDF() {
@@ -414,3 +551,24 @@ window.onload = () => {
     updateWeeklyCounter();
   }
 };
+
+// Preview selected images
+document.getElementById("images").addEventListener("change", function () {
+  const preview = document.getElementById("imagePreview");
+  preview.innerHTML = "";
+  const files = Array.from(this.files);
+
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = document.createElement("img");
+      img.src = e.target.result;
+      img.style.width = "80px";
+      img.style.height = "80px";
+      img.style.objectFit = "cover";
+      img.style.borderRadius = "5px";
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+});
