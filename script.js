@@ -302,22 +302,20 @@ function showSummary(record) {
     else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
 
     // Images display in summary
-    let imagesHTML = "";
-      if (record.images && record.images.length) {
-        imagesHTML = `
-          <p><strong>Images:</strong></p>
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        ${record.images.map(src => `
-            <img src="${src}" 
-             style="width:90px;height:90px;
-             object-fit:cover;border-radius:6px;
-             border:1px solid #444;">
+let imagesHTML = "";
+
+if (record.images && record.images.length) {
+  imagesHTML = `
+    <p><strong>Images:</strong></p>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      ${record.images.map(src => `
+        <img src="${src}" style="width:90px;height:90px;
+        object-fit:cover;border-radius:6px;border:1px solid #444;">
       `).join("")}
     </div>
   `;
 }
-
-  }
+}
 
   // Overall progress
   const totalHours = getTotalHours();
@@ -420,10 +418,19 @@ dailyRecords.forEach((r, i) => {
   let trendColor = "#FFFFFF";
   if (i > 0) {
     const prevDelta = dailyRecords[i - 1].delta;
-    if (r.delta > prevDelta) { trendLabel = "Improved"; trendColor = "#00FF00"; }
-    else if (r.delta < prevDelta) { trendLabel = "Declined"; trendColor = "#FFF000"; }
-    else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
+  if (r.delta > prevDelta) { 
+    trendLabel = "Improved"; 
+    trendColor = "#00FF00"; 
   }
+  else if (r.delta < prevDelta) { 
+    trendLabel = "Declined"; 
+    trendColor = "#FFF000"; 
+  }
+  else { 
+    trendLabel = "Same as before"; 
+    trendColor = "#FFFFFF"; 
+  }
+} 
 
   const imagesHTML = r.images && r.images.length
     ? `<div class="dtr-images" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
@@ -498,8 +505,8 @@ function renderDailyVisualizer() {
 
     // Daily color based on delta
     if (r.delta > GREAT_DELTA_THRESHOLD) square.style.background = "#00FF00"; // green
-    else if (r.delta > 0) square.style.background = "#FFF000"; // yellow
-    else square.style.background = "#FFFFFF"; // white
+    else if (r.delta > 0) square.style.background = "#FFFFFF"; // white
+    else square.style.background = "#FFF000"; // yellow
 
     square.title = `${r.date} — Δ ${r.delta.toFixed(2)} hrs`;
     dailyVisualizer.appendChild(square);
@@ -562,12 +569,6 @@ document.addEventListener("click", e => {
   document.getElementById("editModal").style.display = "flex";
 });
 
-// === MODAL CONTROLS ===
-function closeEditModal() {
-  document.getElementById("editModal").style.display = "none";
-  editingIndex = null;
-}
-
 // === SAVE EDITED RECORD ===
 function saveEditModal() {
   if (editingIndex === null) return;
@@ -596,8 +597,15 @@ function saveEditModal() {
   closeEditModal();
   loadReflectionViewer();
   showSummary(dailyRecords[editingIndex]);
-
+  renderDailyVisualizer();
+  renderWeeklyVisualizer();
   alert("Reflection updated successfully.");
+}
+
+// === MODAL CONTROLS ===
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+  editingIndex = null;
 }
 
 // === DOM Loaded Initialization ===
@@ -619,26 +627,6 @@ window.addEventListener("DOMContentLoaded", () => {
     updateWeeklyCounter();
   }
 });
-
-// === EDIT RECORD FUNCTIONALITY ===
-document.addEventListener("click", function (e) {
-  if (!e.target.classList.contains("edit-btn")) return;
-
-  const index = Number(e.target.dataset.index);
-  const record = dailyRecords[index];
-
-  document.getElementById("date").value = record.date;
-  document.getElementById("hours").value = record.hours;
-  document.getElementById("reflection").value = record.reflection;
-  document.getElementById("tools").value = record.tools.join(", ");
-
-  window.editingIndex = index;
-
-  const saveBtn = document.getElementById("saveBtn");
-  saveBtn.textContent = "Update Record";
-  saveBtn.style.background = "#FF00FF";
-});
-
 
 // EXPORT FUNCTIONS AND IMAGE PREVIEW
 
