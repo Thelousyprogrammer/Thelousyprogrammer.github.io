@@ -2,6 +2,13 @@
 const MASTER_TARGET_HOURS = 500;   // Total OJT goal
 const DAILY_TARGET_HOURS = 8;      // Reference time per day
 const GREAT_DELTA_THRESHOLD = 2;  // 2 hours or more is "great"
+const OJT_START = new Date(2026, 0, 26); // Month is 0-based → 0 = January
+const COLORS = {
+  neutral: "#FFFFFF",
+  warning: "#FFF000",   // yellow – needs attention / low
+  good: "#00FF00",      // green – good performance
+  excellent: "#FF00FF"  // magenta – exceeded target / best
+};
 
 // === DAILY RECORD MODEL ===
 class DailyRecord {
@@ -16,14 +23,21 @@ class DailyRecord {
   }
 }
 
-// === STORAGE ===
+// === STORAGE AND EDIT INDEX===
+let editingIndex = null;
 let dailyRecords = JSON.parse(localStorage.getItem("dtr")) || [];
 
+
 // === HELPER FUNCTIONS ===
-function getWeekNumber(date) {
-  const start = new Date(date.getFullYear(), 0, 1);
-  const diff = date - start;
-  return Math.ceil((diff / 86400000 + start.getDay() + 1) / 7);
+function getWeekNumber(date, reference = OJT_START) {
+  // Normalize both dates to local midnight
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const ref = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate());
+
+  const diff = d.getTime() - ref.getTime();
+
+  if (diff < 0) return 1;  // before OJT start
+  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
 }
 
 function getTotalHours() {
@@ -198,14 +212,26 @@ function checkDateIntegrity(record) {
 function saveRecord(date, hours, reflection, accomplishments, tools, images) {
   const record = new DailyRecord(date, hours, reflection, accomplishments, tools, images);
 
+  // Remove any existing record for this date
+  dailyRecords = dailyRecords.filter(r => r.date !== date);
+
+  // Add the new record
   dailyRecords.push(record);
+
+  // Sort by date ascending
+  dailyRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Save to localStorage
   localStorage.setItem("dtr", JSON.stringify(dailyRecords));
 
+  // Update UI
   loadReflectionViewer();
   showSummary(record);
   updateWeeklyCounter(record.date);
+  renderDailyVisualizer();
+  renderWeeklyVisualizer();
 
-  clearDTRForm(); // 🔥 reset input after save
+  clearDTRForm();
   alert("Daily DTR saved and form cleared!");
 }
 
@@ -229,20 +255,23 @@ function clearDTRForm() {
 
 // === UPDATE WEEKLY COUNTER ===
 function updateWeeklyCounter(dateInput) {
-  const weekNum = dateInput ? getWeekNumber(new Date(dateInput)) : null;
-  const weekHours = weekNum ? getWeekHours(weekNum) : 0;
-  const maxWeeklyHours = DAILY_TARGET_HOURS * 7;
+  if (!dateInput) return;
 
-  let color = "#FFFFFF"; // default normal
-  if (weekHours < maxWeeklyHours * 0.5) color = "#FFFF00"; // lowest
-  else if (weekHours < maxWeeklyHours) color = "#00FF00"; // personal highest
-  else color = "#FF00FF"; // highest overall
+  const weekNum = getWeekNumber(new Date(dateInput));
+  const weekHours = dailyRecords
+    .filter(r => getWeekNumber(new Date(r.date)) === weekNum)
+    .reduce((sum, r) => sum + r.hours, 0);
+
+  const maxWeeklyHours = DAILY_TARGET_HOURS * 7;
+  let color = "#FFFFFF"; // default
+
+  if (weekHours < maxWeeklyHours * 0.5) color = "#FFF000";
+  else if (weekHours < maxWeeklyHours) color = "#00FF00";
+  else color = "#FF00FF";
 
   const counterEl = document.getElementById("weeklyCounter");
   if (counterEl) {
-    counterEl.innerHTML = weekNum
-      ? `Week ${weekNum} Hours: <span style="color:${color}; font-weight:bold;">${weekHours} / ${maxWeeklyHours}</span>`
-      : "";
+    counterEl.innerHTML = `Week ${weekNum} Hours: <span style="color:${color}; font-weight:bold;">${weekHours} / ${maxWeeklyHours}</span>`;
   }
 }
 
@@ -262,14 +291,14 @@ function showSummary(record) {
 
   // Delta color
   let deltaColor = "#FFFFFF"; // normal
-  if (record.delta <= 0) deltaColor = "#FFFF00"; // lowest
+  if (record.delta <= 0) deltaColor = "#FFF000"; // lowest
   else if (record.delta > GREAT_DELTA_THRESHOLD) deltaColor = "#00FF00"; // personal highest
 
   // Delta trend
   let trendLabel = "No previous record", trendColor = "#FFFFFF";
   if (dailyRecords.length > 1) {
     if (record.delta > previousDelta) { trendLabel = "Improved"; trendColor = "#00FF00"; }
-    else if (record.delta < previousDelta) { trendLabel = "Declined"; trendColor = "#FFFF00"; }
+    else if (record.delta < previousDelta) { trendLabel = "Declined"; trendColor = "#FFF000"; }
     else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
 
     // Images display in summary
@@ -303,7 +332,7 @@ function showSummary(record) {
   const maxWeeklyHours = DAILY_TARGET_HOURS * 7;
 
   let weekColor = "#FFFFFF"; // normal
-  if (weekHours < maxWeeklyHours * 0.5) weekColor = "#FFFF00"; // lowest
+  if (weekHours < maxWeeklyHours * 0.5) weekColor = "#FFF000"; // lowest
   else if (weekHours < maxWeeklyHours) weekColor = "#00FF00"; // personal highest
   else weekColor = "#FF00FF"; // highest overall
 
@@ -363,7 +392,7 @@ function loadReflectionViewer() {
     .reduce((sum, r) => sum + r.hours, 0);
 
   let weekColor = "#FFFFFF";
-  if (currentWeekHours < maxWeeklyHours * 0.5) weekColor = "#FFFF00";
+  if (currentWeekHours < maxWeeklyHours * 0.5) weekColor = "#FFF000";
   else if (currentWeekHours < maxWeeklyHours) weekColor = "#00FF00";
   else weekColor = "#FF00FF";
 
@@ -379,79 +408,239 @@ function loadReflectionViewer() {
   viewer.appendChild(counterDiv);
 
   // Reflection items
-  dailyRecords.forEach((r, i) => {
-    let deltaColor = "#FFFFFF";
-    if (r.delta <= 0) deltaColor = "#FFFF00";
-    else if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = "#00FF00";
+dailyRecords.forEach((r, i) => {
+  const weekNum = getWeekNumber(new Date(r.date)); // relative to OJT_START
+  const weekHours = getWeekHours(weekNum);        // use updated week logic
 
-    let trendLabel = "No previous record";
-    let trendColor = "#FFFFFF";
-    if (i > 0) {
-      const prevDelta = dailyRecords[i - 1].delta;
-      if (r.delta > prevDelta) { trendLabel = "Improved"; trendColor = "#00FF00"; }
-      else if (r.delta < prevDelta) { trendLabel = "Declined"; trendColor = "#FFFF00"; }
-      else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
-    }
+  let deltaColor = "#FFFFFF";
+  if (r.delta <= 0) deltaColor = "#FFF000";
+  else if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = "#00FF00";
 
-    const div = document.createElement("div");
-    div.className = "reflection-item";
-let imagesHTML = "";
-if (r.images && r.images.length) {
-  imagesHTML = `
-    <div class="dtr-images" style="
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-      margin-top:6px;">
-      ${r.images.map(src => `
-        <img src="${src}" 
-             style="
-              width:70px;
-              height:70px;
-              object-fit:cover;
-              border-radius:5px;
-              border:1px solid #555;">
-      `).join("")}
-    </div>
-  `;
+  let trendLabel = "No previous record";
+  let trendColor = "#FFFFFF";
+  if (i > 0) {
+    const prevDelta = dailyRecords[i - 1].delta;
+    if (r.delta > prevDelta) { trendLabel = "Improved"; trendColor = "#00FF00"; }
+    else if (r.delta < prevDelta) { trendLabel = "Declined"; trendColor = "#FFF000"; }
+    else { trendLabel = "Same as before"; trendColor = "#FFFFFF"; }
+  }
+
+  const imagesHTML = r.images && r.images.length
+    ? `<div class="dtr-images" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+        ${r.images.map(src => `<img src="${src}" style="width:70px; height:70px; object-fit:cover; border-radius:5px; border:1px solid #555;">`).join("")}
+       </div>`
+    : "";
+
+  const toolsHTML = r.tools && r.tools.length
+    ? `<p><strong>Tools Used:</strong> ${r.tools.join(", ")}</p>`
+    : "";
+
+const div = document.createElement("div");
+div.className = "reflection-item";
+div.innerHTML = `
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <strong>${i + 1}. ${r.date} (Week ${weekNum})</strong>
+
+    <button 
+      class="edit-btn" 
+      data-index="${i}"
+      style="
+        background:#1e1e1e;
+        color:#fff;
+        border:1px solid #ff1e00;
+        padding:4px 10px;
+        border-radius:5px;
+        cursor:pointer;
+        font-size:12px;">
+      ✎ Edit
+    </button>
+  </div>
+
+  <p>${r.reflection}</p>
+
+  <small>
+    Hours:
+    <span style="color:${weekColor}; font-weight:bold;">${r.hours}</span> |
+    Delta:
+    <span style="color:${deltaColor}; font-weight:bold;">${r.delta.toFixed(2)}</span> |
+    Trend:
+    <span style="color:${trendColor}; font-weight:bold;">${trendLabel}</span> |
+    Week Total:
+    <span style="color:${weekColor}; font-weight:bold;">${weekHours} hrs</span>
+  </small>
+
+  ${toolsHTML}
+  ${imagesHTML}
+  <hr>
+`;
+viewer.appendChild(div);
+});
 }
-    div.innerHTML = `
-      <strong>${i + 1}. ${r.date}</strong>
-      <p>${r.reflection}</p>
-      <small>
-        Hours: ${r.hours} | 
-        Delta: <span style="color:${deltaColor}">${r.delta.toFixed(2)}</span> |
-        Trend: <span style="color:${trendColor}">${trendLabel}</span>
-      </small>
-      ${imagesHTML}
-      <hr>
-    `;
-    viewer.appendChild(div);
-  });
 
-  // Activity visualizer
-  const visualizer = document.createElement("div");
-  visualizer.id = "activityVisualizer";
-  visualizer.style.display = "flex";
-  visualizer.style.flexWrap = "wrap";
-  visualizer.style.marginTop = "10px";
-  viewer.appendChild(visualizer);
+// === Daily Performance View ===
+function renderDailyVisualizer() {
+  const dailyVisualizer = document.getElementById("dailyVisualizer");
+  if (!dailyVisualizer) return;
+  dailyVisualizer.innerHTML = ""; // clear old content
+
+  if (!dailyRecords.length) {
+    dailyVisualizer.innerHTML = "<p class='empty'>No daily records yet.</p>";
+    return;
+  }
 
   dailyRecords.forEach(r => {
-    const daySquare = document.createElement("div");
-    daySquare.style.width = "14px";
-    daySquare.style.height = "14px";
-    daySquare.style.margin = "2px";
-    daySquare.style.borderRadius = "3px";
+    const square = document.createElement("div");
+    square.style.width = "14px";
+    square.style.height = "14px";
+    square.style.margin = "2px";
+    square.style.borderRadius = "3px";
+    square.style.border = "1px solid #ccc";
 
-    if (r.delta > GREAT_DELTA_THRESHOLD) daySquare.style.backgroundColor = "#00FF00";
-    else if (r.delta > 0) daySquare.style.backgroundColor = "#FFFF00";
-    else daySquare.style.backgroundColor = "#FFFFFF";
+    // Daily color based on delta
+    if (r.delta > GREAT_DELTA_THRESHOLD) square.style.background = "#00FF00"; // green
+    else if (r.delta > 0) square.style.background = "#FFF000"; // yellow
+    else square.style.background = "#FFFFFF"; // white
 
-    daySquare.title = `${r.date} — ${r.delta >= 0 ? "+" : ""}${r.delta.toFixed(2)} hrs`;
-    visualizer.appendChild(daySquare);
+    square.title = `${r.date} — Δ ${r.delta.toFixed(2)} hrs`;
+    dailyVisualizer.appendChild(square);
   });
 }
+
+// === Weekly Productivity Calendar ===
+function renderWeeklyVisualizer() {
+  const weeklyVisualizer = document.getElementById("weeklyVisualizer");
+  if (!weeklyVisualizer) return;
+  weeklyVisualizer.innerHTML = "";
+
+  if (!dailyRecords.length) {
+    weeklyVisualizer.innerHTML = "<p class='empty'>No weekly records yet.</p>";
+    return;
+  }
+
+// Build weekly totals once
+const weeklyTotals = {};
+dailyRecords.forEach(r => {
+  const w = getWeekNumber(new Date(r.date));
+  weeklyTotals[w] = (weeklyTotals[w] || 0) + r.hours;
+});
+
+// Get maximum week hours for color scaling
+const maxWeeklyHours = Math.max(...Object.values(weeklyTotals));
+
+  Object.entries(weeklyTotals).forEach(([weekKey, totalHours]) => {
+    const square = document.createElement("div");
+    square.style.width = "20px";
+    square.style.height = "20px";
+    square.style.margin = "2px";
+    square.style.borderRadius = "3px";
+    square.style.border = "1px solid #ccc";
+
+    // Color coding per week performance
+    const ratio = totalHours / maxWeeklyHours;
+    if (ratio >= 0.9) square.style.backgroundColor = "#FF00FF"; // top week
+    else if (ratio >= 0.6) square.style.backgroundColor = "#00FF00"; // strong week
+    else if (ratio >= 0.3) square.style.backgroundColor = "#FFFFFF"; // medium week
+    else square.style.backgroundColor = "#FFF000"; // low week
+
+    square.title = `Week ${weekKey} — Total Hours: ${totalHours}`;
+    weeklyVisualizer.appendChild(square);
+  });
+}
+
+// === EDIT RECORD MODAL HANDLING ===
+document.addEventListener("click", e => {
+  if (!e.target.classList.contains("edit-btn")) return;
+
+  editingIndex = Number(e.target.dataset.index);
+  const r = dailyRecords[editingIndex];
+
+  document.getElementById("editDate").value = r.date;
+  document.getElementById("editHours").value = r.hours;
+  document.getElementById("editReflection").value = r.reflection;
+  document.getElementById("editTools").value = r.tools.join(", ");
+
+  document.getElementById("editModal").style.display = "flex";
+});
+
+// === MODAL CONTROLS ===
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+  editingIndex = null;
+}
+
+// === SAVE EDITED RECORD ===
+function saveEditModal() {
+  if (editingIndex === null) return;
+
+  const date = document.getElementById("editDate").value;
+  const hours = parseFloat(document.getElementById("editHours").value);
+  const reflection = document.getElementById("editReflection").value;
+  const tools = document.getElementById("editTools").value
+    .split(",")
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  const old = dailyRecords[editingIndex];
+
+  dailyRecords[editingIndex] = new DailyRecord(
+    date,
+    hours,
+    reflection,
+    old.accomplishments || [],
+    tools,
+    old.images || []
+  );
+
+  localStorage.setItem("dtr", JSON.stringify(dailyRecords));
+
+  closeEditModal();
+  loadReflectionViewer();
+  showSummary(dailyRecords[editingIndex]);
+
+  alert("Reflection updated successfully.");
+}
+
+// === DOM Loaded Initialization ===
+window.addEventListener("DOMContentLoaded", () => {
+  dailyRecords = JSON.parse(localStorage.getItem("dtr")) || [];
+
+  // Render reflections normally
+  loadReflectionViewer();
+
+  // Render performance visualizers
+  renderDailyVisualizer();
+  renderWeeklyVisualizer();
+
+  if (dailyRecords.length) {
+    showSummary(dailyRecords[dailyRecords.length - 1]);
+    updateWeeklyCounter(dailyRecords[dailyRecords.length - 1].date);
+  } else {
+    showSummary({});
+    updateWeeklyCounter();
+  }
+});
+
+// === EDIT RECORD FUNCTIONALITY ===
+document.addEventListener("click", function (e) {
+  if (!e.target.classList.contains("edit-btn")) return;
+
+  const index = Number(e.target.dataset.index);
+  const record = dailyRecords[index];
+
+  document.getElementById("date").value = record.date;
+  document.getElementById("hours").value = record.hours;
+  document.getElementById("reflection").value = record.reflection;
+  document.getElementById("tools").value = record.tools.join(", ");
+
+  window.editingIndex = index;
+
+  const saveBtn = document.getElementById("saveBtn");
+  saveBtn.textContent = "Update Record";
+  saveBtn.style.background = "#FF00FF";
+});
+
+
+// EXPORT FUNCTIONS AND IMAGE PREVIEW
 
 // === EXPORT PDF FUNCTIONS ===
 function exportPDF() {
@@ -549,19 +738,6 @@ function exportWeeklyPDF() {
 
   doc.save(getTodayFileName("Weekly_DTR_Report", "pdf"));
 }
-
-// === PAGE LOAD ===
-window.onload = () => {
-  dailyRecords = JSON.parse(localStorage.getItem("dtr")) || [];
-  loadReflectionViewer();
-  if (dailyRecords.length) {
-    showSummary(dailyRecords[dailyRecords.length - 1]);
-    updateWeeklyCounter(dailyRecords[dailyRecords.length - 1].date);
-  } else {
-    showSummary({});
-    updateWeeklyCounter();
-  }
-};
 
 // Preview selected images
 document.getElementById("images").addEventListener("change", function () {

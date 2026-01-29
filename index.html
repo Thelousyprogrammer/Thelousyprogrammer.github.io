@@ -73,6 +73,7 @@
     <button onclick="submitDTR()">Save Day</button>
     <button class="danger" onclick="deleteLastRecord()">Delete Last Entry</button>
     <button class="danger" onclick="clearAllRecords()">Clear All Records</button>
+    <button class="danger" onclick="clearDTRForm()">Clear DTR Form</button>
   </div>
 
   <!-- Session Summary Preview -->
@@ -91,12 +92,47 @@
       <p class="empty">No reflections saved yet.</p>
     </div>
 
+  <div class="card">
+    <h2>Daily Performance View</h2>
+    <div id="dailyVisualizer" class="visualizer"></div>
+  </div>
+
+  <!-- WEEKLY PERFORMANCE CARD -->
+  <div class="card">
+    <h2>Weekly Performance View</h2>
+    <div id="weeklyVisualizer" class="calendar-visualizer"></div>
+  </div>
+
     <div class="viewer-actions">
       <button onclick="exportPDF()">Export All DTRs (PDF)</button>
       <button onclick="exportWeeklyPDF()">Export Weekly DTR (PDF)</button>
     </div>
-  </div>
+</div>
 
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3>Edit DTR Record</h3>
+
+    <label>Date</label>
+    <input type="date" id="editDate">
+
+    <label>Hours</label>
+    <input type="number" id="editHours" step="0.1">
+
+    <label>Reflection</label>
+    <input type="text" id="editReflection">
+
+    <label>Accomplishments (comma separated)</label>
+    <input type="text" id="editAccomplishments">
+
+    <label>Tools Used (comma separated)</label>
+    <input type="text" id="editTools">
+
+    <div class="modal-actions">
+      <button onclick="closeEditModal()">Cancel</button>
+      <button onclick="updateRecord()">Update</button>
+    </div>
+  </div>
 </div>
 
 <!-- jsPDF -->

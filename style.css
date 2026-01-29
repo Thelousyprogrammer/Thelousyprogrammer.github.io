@@ -1,3 +1,10 @@
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 600px) {
+  .container {
+    padding: 10px;
+  }
+}
+
 /* ===== THEME COLLECTIONS ===== */
 /* ===== BASE THEME VARIABLES ===== */
 :root {
@@ -170,9 +177,95 @@ button:hover {
   cursor: pointer;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 600px) {
-  .container {
-    padding: 10px;
-  }
+#weeklyVisualizer .empty {
+  white-space: nowrap;
+}
+
+/* ===== CALENDAR VISUALIZER ===== */
+.visualizer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.calendar-visualizer {
+  display: grid;
+  grid-template-columns: repeat(7, 16px);
+  gap: 4px;
+}
+
+/* ===== MODAL STYLES ===== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;   /* This is critical for Firefox */
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  width: 720px;
+  max-width: 90%;
+  padding: 24px 28px;
+  border-radius: 14px;
+  background: var(--card-bg, #0f0f12);
+  color: var(--card-text, #ffffff);
+  border: 1px solid var(--accent, #ff3300);
+  box-shadow: 0 0 35px rgba(255, 60, 0, 0.35);
+}
+
+.modal-content h2,
+.modal-content h3 {
+  text-align: center;
+  color: var(--accent, #ff3300);
+  margin-bottom: 15px;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.modal-content input,
+.modal-content textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.05);
+  color: var(--card-text, #fff);
+  border: 1px solid var(--accent, #ff3300);
+  border-radius: 6px;
+  outline: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.modal-actions button {
+  padding: 6px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  background: var(--accent, #ff3300);
+  color: #000;
+}
+
+#editModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
 }
