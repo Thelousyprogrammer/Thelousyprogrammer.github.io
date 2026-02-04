@@ -1,7 +1,7 @@
 // === CONFIG ===
 const MASTER_TARGET_HOURS = 500;   // Total OJT goal
 const DAILY_TARGET_HOURS = 8;      // Reference time per day
-const GREAT_DELTA_THRESHOLD = 2;  // 2 hours or more is "great"
+const GREAT_DELTA_THRESHOLD = 1;  // 2 hours or more is "great"
 const OJT_START = new Date(2026, 0, 26); // Month is 0-based → 0 = January
 const COLORS = {
   neutral: "#FFFFFF",
@@ -228,7 +228,7 @@ function showSummary(record) {
   // Delta color
   let deltaColor = COLORS.neutral; // normal
   if (record.delta <= 0) deltaColor = COLORS.warning; // lowest
-  else if (record.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.good; // personal highest
+  else if (record.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.excellent; // personal highest
 
   // Delta trend
   let trendLabel = "No previous record", trendColor = COLORS.neutral;
@@ -254,7 +254,7 @@ if (record.images && record.images.length) {
   let overallStatus = totalHours > MASTER_TARGET_HOURS
     ? "OVER 500 HOURS LIMIT!" 
     : `${totalHours} / ${MASTER_TARGET_HOURS} hours completed`;
-  let overallColor = (totalHours >= MASTER_TARGET_HOURS) ? COLORS.warning : COLORS.good; // highest vs personal
+  let overallColor = (totalHours >= MASTER_TARGET_HOURS) ? COLORS.excellent : COLORS.good; // highest vs personal
 
   // Weekly hours
   const weekNum = record.date ? getWeekNumber(new Date(record.date)) : null;
@@ -264,7 +264,7 @@ if (record.images && record.images.length) {
   let weekColor = COLORS.neutral; // normal
   if (weekHours < maxWeeklyHours * 0.5) weekColor = COLORS.warning; // lowest
   else if (weekHours < maxWeeklyHours) weekColor = COLORS.good; // personal highest
-  else weekColor = COLORS.warning; // highest overall
+  else weekColor = COLORS.excellent; // highest overall
 
   s.innerHTML = `
     <h2>Session Delta Summary</h2>
@@ -342,9 +342,9 @@ dailyRecords.forEach((r, i) => {
   const weekNum = getWeekNumber(new Date(r.date)); // relative to OJT_START
   const weekHours = getWeekHours(weekNum);        // use updated week logic
 
-  let deltaColor = COLORS.neutral;
+  let deltaColor = COLORS.good;
   if (r.delta <= 0) deltaColor = COLORS.warning;
-  else if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.good;
+  else if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.excellent;
 
   let trendLabel = "No previous record";
   let trendColor = COLORS.neutral;
@@ -436,8 +436,8 @@ function renderDailyVisualizer() {
     square.style.border = "1px solid #ccc";
 
     // Daily color based on delta
-    if (r.delta > GREAT_DELTA_THRESHOLD) square.style.background = COLORS.good; // green
-    else if (r.delta > 0) square.style.background = COLORS.neutral; // white
+    if (r.delta > GREAT_DELTA_THRESHOLD) square.style.background = COLORS.excellent; // violet
+    else if (r.delta > 0) square.style.background = COLORS.good; // green
     else square.style.background = COLORS.warning; // yellow
 
     square.title = `${r.date} — Δ ${r.delta.toFixed(2)} hrs`;
@@ -476,7 +476,7 @@ const maxWeeklyHours = Math.max(1, ...Object.values(weeklyTotals));
 
     // Color coding per week performance
     const ratio = totalHours / maxWeeklyHours;
-    if (ratio >= 0.9) square.style.backgroundColor = COLORS.warning; // top week
+    if (ratio >= 0.9) square.style.backgroundColor = COLORS.excellent; // top week
     else if (ratio >= 0.6) square.style.backgroundColor = COLORS.good; // strong week
     else if (ratio >= 0.3) square.style.backgroundColor = COLORS.neutral; // medium week
     else square.style.backgroundColor = COLORS.warning; // low week
