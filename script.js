@@ -200,7 +200,7 @@ function updateWeeklyCounter(dateInput) {
 
   if (weekHours < maxWeeklyHours * 0.5) color = COLORS.warning;
   else if (weekHours < maxWeeklyHours) color = COLORS.good;
-  else color = COLORS.warning;
+  else color = COLORS.neutral;
 
   const counterEl = document.getElementById("weeklyCounter");
   if (counterEl) {
@@ -228,7 +228,7 @@ function showSummary(record) {
   // Delta color
   let deltaColor = COLORS.neutral; // normal
   if (record.delta <= 0) deltaColor = COLORS.warning; // lowest
-  else if (record.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.excellent; // personal highest
+  else if (record.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.good; // personal highest
 
   // Delta trend
   let trendLabel = "No previous record", trendColor = COLORS.neutral;
@@ -324,7 +324,7 @@ function loadReflectionViewer() {
   let weekColor = COLORS.neutral;
   if (currentWeekHours < maxWeeklyHours * 0.5) weekColor = COLORS.warning;
   else if (currentWeekHours < maxWeeklyHours) weekColor = COLORS.good;
-  else weekColor = COLORS.warning;
+  else weekColor = COLORS.neutral;
 
   const counterDiv = document.createElement("div");
   counterDiv.id = "weeklyCounterViewer";
@@ -342,9 +342,9 @@ dailyRecords.forEach((r, i) => {
   const weekNum = getWeekNumber(new Date(r.date)); // relative to OJT_START
   const weekHours = getWeekHours(weekNum);        // use updated week logic
 
-  let deltaColor = COLORS.good;
+  let deltaColor = COLORS.neutral;
   if (r.delta <= 0) deltaColor = COLORS.warning;
-  else if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.excellent;
+  else if (r.delta > GREAT_DELTA_THRESHOLD) deltaColor = COLORS.good;
 
   let trendLabel = "No previous record";
   let trendColor = COLORS.neutral;
