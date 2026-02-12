@@ -4,10 +4,10 @@ const DAILY_TARGET_HOURS = 8;      // Reference time per day
 const GREAT_DELTA_THRESHOLD = 2;  // 2 hours or more is "great"
 const OJT_START = new Date(2026, 0, 26); // Month is 0-based → 0 = January
 const COLORS = {
-  neutral: "#FFFFFF",
-  warning: "#FFF000",   // yellow – needs attention / low
-  good: "#00FF00",      // green – good performance
-  excellent: "#FF00FF"  // magenta – exceeded target / best
+  neutral: "var(--color-neutral)",
+  warning: "var(--color-warning)",
+  good: "var(--color-good)",
+  excellent: "var(--color-excellent)"
 };
 let dailyRecords = []; // Loaded from localStorage
 
@@ -420,15 +420,7 @@ function loadReflectionViewer() {
 
         <button 
           class="edit-btn" 
-          data-index="${item.originalIndex}"
-          style="
-            background:#1e1e1e;
-            color:#fff;
-            border:1px solid #ff1e00;
-            padding:4px 10px;
-            border-radius:5px;
-            cursor:pointer;
-            font-size:12px;">
+          data-index="${item.originalIndex}">
           ✎ Edit
         </button>
       </div>
