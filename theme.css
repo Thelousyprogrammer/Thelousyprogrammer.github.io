@@ -1,39 +1,38 @@
-/* 1. Global Defaults - No more overrides in :root */
+
 :root {
+  /* 1. Global Defaults (F1 Style) */
   --level-0: #1a1a1a; 
-  --level-1: #FFF000; 
-  --level-2: #00FF00; 
-  --level-3: #FF00FF; 
+  --level-1: #FFF000; /* Yellow */
+  --level-2: #00FF00; /* Green */
+  --level-3: #FF00FF; /* Magenta */
 }
 
-/* 2. Cadillac Theme: Solid Luxury */
+/* 2. Cadillac Overrides */
 [data-theme="cadillac"] {
-    --bg: #282828;
-    --level-0: #333333; /* Recovery (Gray) */
-    --level-1: #c8002b; /* Survival (Red) */
-    --level-2: #2c28e8; /* Solid (Blue) */
-    --level-3: #e8b01e; /* Elite (Gold) */
-
-    --color-highest: var(--level-3);
-    --color-mid: var(--level-2);
-    --color-low: var(--level-1);
-    --color-empty: var(--level-0);
+  --level-0: #333333; /* Gray */
+  --level-1: #c8002b; /* Red (Low) */
+  --level-2: #2c28e8; /* Blue (Mid) */
+  --level-3: #e8b01e; /* Gold (Highest) */
+  
+  /* Map for JS */
+  --color-highest: var(--level-3);
+  --color-mid: var(--level-2);
+  --color-low: var(--level-1);
+  --color-empty: var(--level-0);
 }
 
-/* 3. APX Theme: High-Density Carbon & Brightened Levels */
+/* 3. APX Overrides */
 [data-theme="apx"] {
-    --bg: #000000;
-    --level-0: #1a1a1a; 
-    --level-1: #a68b31; /* BRIGHTENED: Bronze (Survival) */
-    --level-2: #cbb145; /* Gold (Solid) */
-    --level-3: #fefefe; /* White (Elite) */
+  --level-0: #1a1a1a; 
+  --level-1: #6b5a1a; /* Bronze */
+  --level-2: #cbb145; /* Gold */
+  --level-3: #fefefe; /* White */
 
-    --color-highest: var(--level-3);
-    --color-mid: var(--level-2);
-    --color-low: var(--level-1);
-    --color-empty: var(--level-0);
-    
-    --apx-gold: #cbb145;
+  /* Map for JS */
+  --color-highest: var(--level-3);
+  --color-mid: var(--level-2);
+  --color-low: var(--level-1);
+  --color-empty: var(--level-0);
 }
 
 /* ==========================================
@@ -312,8 +311,9 @@
         linear-gradient(45deg, #0a0a0a 25%, transparent 25%), 
         linear-gradient(-45deg, #0a0a0a 25%, transparent 25%), 
         linear-gradient(45deg, transparent 75%, #0a0a0a 75%), 
-        linear-gradient(-45deg, transparent 75%, #0a0a0a 75%);
-    background-size: 8px 8px;
+        linear-gradient(-45deg, transparent 75%, #0a0a0a 75%),
+        radial-gradient(#1a1a1a 1px, transparent 0);
+    background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, 4px 4px;
     background-attachment: fixed;
 }
 
