@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>DTR Telemetry – Performance Analytics</title>
-  <link rel="stylesheet" href="style.css?v=2.2">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="telemetry.css">
+  <link rel="stylesheet" href="theme.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "f1");
+    // Get the saved theme immediately to prevent a white "flash" on load
+    const savedTheme = localStorage.getItem('user-theme') || 'f1';
+    document.documentElement.setAttribute('data-theme', savedTheme);
   </script>
 </head>
 <body>
@@ -21,6 +25,9 @@
         <select id="weekSelect" class="telemetry-select" onchange="updateView()">
           <option value="all">Full OJT Span</option>
         </select>
+        <button class="telemetry-btn" onclick="setTelemetryTheme('f1')">F1</button>
+        <button class="telemetry-btn" onclick="setTelemetryTheme('cadillac')">Cadillac</button>
+        <button class="telemetry-btn" onclick="setTelemetryTheme('apx')">APX GP</button>
         <button class="telemetry-btn" onclick="window.location.href='index.html'">Back to DTR</button>
       </div>
     </div>
