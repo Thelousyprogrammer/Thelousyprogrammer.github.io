@@ -22,13 +22,13 @@ class DailyRecord {
     this.tools = tools;
     this.images = images;
     
-    // Level 2 Metrics
     this.personalHours = parseFloat(l2Data.personalHours) || 0;
     this.sleepHours = parseFloat(l2Data.sleepHours) || 0;
     this.recoveryHours = parseFloat(l2Data.recoveryHours) || 0;
     this.commuteTotal = parseFloat(l2Data.commuteTotal) || 0;
     this.commuteProductive = parseFloat(l2Data.commuteProductive) || 0;
-    this.identityScore = parseInt(l2Data.identityScore) || 0;
+    // Set to null if 0 to avoid skewing averages
+    this.identityScore = parseInt(l2Data.identityScore) || null;
   }
 }
 
@@ -82,11 +82,21 @@ function getTodayFileName(prefix, ext) {
 }
 
 // === THEME SYSTEM ===
-function setTheme(name) {
-  document.documentElement.setAttribute("data-theme", name);
-  localStorage.setItem("theme", name);
+function setTheme(themeName) {
+    // 1. Apply to the current document
+    document.documentElement.setAttribute('data-theme', themeName);
+    
+    // 2. Save it to the browser's memory
+    localStorage.setItem('user-theme', themeName);
+    
+    console.log("Theme synced: " + themeName);
 }
-setTheme(localStorage.getItem("theme") || "f1");
+
+// 3. THIS IS THE KEY: Run this every time the page loads
+window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('user-theme') || 'f1';
+    setTheme(savedTheme);
+});
 
 // === DELETE LAST RECORD ===
 function deleteLastRecord() {
@@ -118,6 +128,19 @@ function clearAllRecords() {
   showSummary({});
   updateWeeklyCounter();
   alert("All DTR records cleared.");
+}
+
+function checkDataHealth(record) {
+    const warnings = [];
+    if (record.sleepHours === 0) warnings.push("Sleep Duration is 0");
+    if (record.recoveryHours === 0) warnings.push("Recovery Time is 0");
+    if (!record.identityScore) warnings.push("Identity Alignment not set");
+    
+    if (warnings.length > 0) {
+        console.warn("Data Health Check:", warnings.join(", "));
+        return confirm(`Warning: The following metrics are missing:\n- ${warnings.join("\n- ")}\n\nSave anyway?`);
+    }
+    return true;
 }
 
 // === SUBMIT DTR ===
@@ -152,6 +175,8 @@ function submitDTR() {
     commuteProductive: document.getElementById("commuteProductive").value,
     identityScore: document.getElementById("identityScore").value
   };
+  const recordCheck = new DailyRecord(date, hours, reflection, [], [], [], l2Data);
+  if (!checkDataHealth(recordCheck)) return;
 
   if (files.length > 0) {
     let loaded = 0;
@@ -319,7 +344,7 @@ if (record.images && record.images.length) {
   const identityText = identityMap[record.identityScore] || "Not Set";
   const commuteEff = record.commuteTotal > 0 
     ? ((record.commuteProductive / record.commuteTotal) * 100).toFixed(1) + "%" 
-    : "0%";
+    : "N/A (No Commute)";
 
   const telemetryHTML = `
     <div style="margin-top:20px; padding-top:15px; border-top: 1px dotted var(--border); display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:0.9em;">
@@ -563,8 +588,9 @@ function renderDailyGraph() {
 
     const cell = document.createElement("div");
     cell.className = "day-cell";
-    cell.style.backgroundColor = `var(--level-${level})`;
     cell.title = `${dateStr}: ${record ? record.hours : 0} hours`;
+    cell.setAttribute('data-level', level); 
+    cell.style.backgroundColor = `var(--level-${level})`;
     
     // Optional: add click event to scroll to that record
     if (record) {

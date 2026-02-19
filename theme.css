@@ -1,0 +1,344 @@
+
+:root {
+  /* 1. Global Defaults (F1 Style) */
+  --level-0: #1a1a1a; 
+  --level-1: #FFF000; /* Yellow */
+  --level-2: #00FF00; /* Green */
+  --level-3: #FF00FF; /* Magenta */
+}
+
+/* 2. Cadillac Overrides */
+[data-theme="cadillac"] {
+  --level-0: #333333; /* Gray */
+  --level-1: #c8002b; /* Red (Low) */
+  --level-2: #2c28e8; /* Blue (Mid) */
+  --level-3: #e8b01e; /* Gold (Highest) */
+  
+  /* Map for JS */
+  --color-highest: var(--level-3);
+  --color-mid: var(--level-2);
+  --color-low: var(--level-1);
+  --color-empty: var(--level-0);
+}
+
+/* 3. APX Overrides */
+[data-theme="apx"] {
+  --level-0: #1a1a1a; 
+  --level-1: #6b5a1a; /* Bronze */
+  --level-2: #cbb145; /* Gold */
+  --level-3: #fefefe; /* White */
+
+  /* Map for JS */
+  --color-highest: var(--level-3);
+  --color-mid: var(--level-2);
+  --color-low: var(--level-1);
+  --color-empty: var(--level-0);
+}
+
+/* ==========================================
+   1. FORMULA 1 TEAM (Red/Modern)
+   ========================================== */
+@font-face {
+  font-family: 'KH Interference';
+  src: local('KH Interference Regular'), local('KHInterference-Regular'),
+       url('fonts/KHInterference-Regular.woff2') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KH Interference';
+  src: local('KH Interference Bold'), local('KHInterference-Bold'),
+       url('fonts/KHInterference-Bold.woff2') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Formula1 Display';
+  src: local('Formula1 Display-Regular'), local('Formula1 Display-Regular'),
+       url('fonts/Formula1Display-Regular.woff2') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+[data-theme="f1"] {
+  /* Brand Colors */
+  --bg: #15151e;
+  --text: #ffffff;
+  --panel: #1f1f2a;
+  --accent: #ff1e00;
+  --border: #ff1e00;
+  
+  /* Fonts */
+  --font-heading: "KH Interference", sans-serif;
+  --font-body: "Formula1 Display", sans-serif;
+
+  /* Level Colors (Scaled from Accent) */
+  --level-0: #333333;
+  --level-1: #FFF000; /* Caution Yellow */
+  --level-2: #00FF00; /* Sector Green */
+  --level-3: #FF00FF; /* Sector Purple */
+  /* Chart Overrides */
+  --chart-grid: rgba(255, 255, 255, 0.05);
+  --chart-fill: rgba(255, 30, 0, 0.2);
+  --chart-ideal: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="f1"] .btn-destructive {
+    background: #ff1e00; /* F1 Red */
+    border: none;
+    font-style: italic;
+}
+
+/* ==========================================
+   2. CADILLAC V-SERIES (Gold/Luxury)
+   ========================================== */
+@font-face {
+  font-family: 'Cadillac Gothic';
+  src: url('fonts/CadillacGothic-Regular.woff2') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cadillac Gothic';
+  src: url('fonts/CadillacGothic-Medium.woff2') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cadillac Gothic Wide';
+  src: url('fonts/CadillacGothic-WideRegular.woff2') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cadillac Gothic Wide Bold';
+  src: url('fonts/CadillacGothic-WideBold.woff2') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+[data-theme="cadillac"] {
+    /* Foundation */
+    --bg: #282828;           /* Gray 1 */
+    --surface: #505050;      /* Gray 2 */
+    --border: #787878;       /* Gray 3 */
+    --text-dim: #a0a0a0;     /* Gray 4 */
+    --text: #ffffff;         /* White */
+    --black: #000000;
+
+    /* Primary: Gold */
+    --accent: #e8b01e; --accent-dark: #c8800d; --accent-light: #f5d98f;
+    /* Secondary: Red */
+    --sec: #c8002b; --sec-dark: #a00021; --sec-light: #fa335e;
+    /* Tertiary: Blue */
+    --tri: #2c28e8; --tri-dark: #171473; --tri-light: #5754ed;
+
+    /* Semantic Mappings for Telemetry logic */
+    --color-highest: var(--accent); /* Gold */
+    --color-mid: var(--tri);      /* Blue */
+    --color-low: var(--sec);      /* Red */
+    --color-empty: var(--bg);     /* Gray */
+    --chart-grid: rgba(255, 255, 255, 0.05);
+    --chart-fill: rgba(232, 176, 30, 0.1);
+    --chart-ideal: rgba(255, 255, 255, 0.15);
+}
+
+/* Remove that white gradient pseudo-element entirely and use this instead */
+[data-theme="cadillac"]::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -2; /* Deepest layer */
+  /* Replaced White with Gray 1 to Black Gradient */
+  background: linear-gradient(180deg, 
+    rgba(255, 255, 255, 1) 0%, 
+    rgba(128, 128, 128, 1) 50%, 
+    rgba(0, 0, 0, 1) 100%);
+  pointer-events: none;
+}
+
+/* --- Card Reconfiguration (Opaque & Solid) --- */
+/* FORCE SOLID CARDS FOR CADILLAC */
+[data-theme="cadillac"] .card, 
+[data-theme="cadillac"] .stat-card, 
+[data-theme="cadillac"] .telemetry-card,
+[data-theme="cadillac"] .chart-container {
+    background-color: #282828 !important; /* Matches --bg */
+    background-image: none !important;
+    opacity: 1 !important;
+    border: 1px solid var(--border) !important;
+    backdrop-filter: none !important; /* Removes any blur that causes lag */
+}
+
+/* Ensure text remains visible on the solid background */
+[data-theme="cadillac"] .card h3, 
+[data-theme="cadillac"] .stat-value {
+    color: var(--text) !important;
+}
+
+/* Accent top-border for Cadillac Cards */
+[data-theme="cadillac"] .card::before,
+[data-theme="cadillac"] .stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-dark), var(--accent), var(--accent-light));
+}
+
+/* --- Button Refactor --- */
+/* Default buttons (Gold) */
+[data-theme="cadillac"] button {
+    background: linear-gradient(to bottom, var(--accent), var(--accent-dark));
+    color: var(--black); font-weight: 700; border: 1px solid var(--accent-light);
+}
+
+[data-theme="cadillac"] button:hover {
+    background: var(--accent-light) !important;
+    box-shadow: 0 0 15px rgba(232, 176, 30, 0.4) !important;
+}
+
+/* Destructive/Form Buttons (Red) */
+[data-theme="cadillac"] .btn-destructive {
+    background: linear-gradient(to bottom, var(--sec), var(--sec-dark)) !important;
+    border: 1px solid var(--sec-light) !important;
+    color: white !important;
+}
+
+[data-theme="cadillac"] .btn-destructive:hover {
+    background: var(--sec-light) !important;
+    box-shadow: 0 0 15px rgba(232, 176, 30, 0.4) !important;
+}
+
+/* --- Typography --- */
+[data-theme="cadillac"] h1, 
+[data-theme="cadillac"] h2, 
+[data-theme="cadillac"] h3 {
+    font-family: 'Cadillac Gothic Wide Bold', sans-serif;
+    color: var(--accent);
+    letter-spacing: 2px;
+}
+
+[data-theme="cadillac"] label,
+[data-theme="cadillac"] span,
+[data-theme="cadillac"] p,
+[data-theme="cadillac"] button,
+[data-theme="cadillac"] input,
+[data-theme="cadillac"] textarea,
+[data-theme="cadillac"] body {
+    font-family: 'Cadillac Gothic Wide', sans-serif !important;
+    font-weight: 400;
+    color: var(--text);
+}
+
+/* High Contrast for readability on cards */
+[data-theme="cadillac"] .text-secondary,
+[data-theme="cadillac"] .muted-text {
+    color: var(--text-dim) !important;
+}
+
+/* Ensure Cadillac doesn't inherit this pattern */
+[data-theme="cadillac"] body {
+    background-image: none !important;
+}
+
+/* ==========================================
+   3. APX GP (Fictional Film Team - Gold/Black)
+   ========================================== */
+@font-face {
+  font-family: 'UAV OSD Sans';
+  src: url('fonts/UAV-OSD-Sans-Mono.woff2') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Jet Brains Mono';
+  src: url('fonts/JetBrainsMonoNerdFont-Regular.woff2') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+}
+
+[data-theme="apx"] {
+    /* Brand Palette */
+    --apx-gold: #cbb145;
+    --apx-black: #000000;
+    --apx-white: #fefefe;
+    --apx-gray: #2a2a2a; /* Brighter gray for cards */
+
+    /* Foundation */
+    --bg: var(--apx-black);
+    --surface: var(--apx-gray); /* Gray 2 equivalent for solid cards */
+    --text: var(--apx-white);
+    --text-dim: #888888;
+    --border: var(--apx-gold);
+    --accent: var(--apx-gold);
+
+    /* Chart Semantic Tiers (Crucial for visibility) */
+    --color-highest: #fefefe;   /* White (Elite/10h+) - Pops most on black */
+    --color-mid: #cbb145;       /* APX Gold (Solid/8h+) */
+    --color-low: #6b5a1a;       /* Dark Gold/Bronze (Low/<8h) */
+    --color-empty: #1a1a1a;     /* Tech Gray (Zero/Off) */
+
+    /* Map these to the names JS looks for */
+    --color-excellent: var(--color-highest);
+    --color-good: var(--color-mid);
+    --color-warning: #ff4444; /* Standard alert red for APX */
+    
+    --chart-grid: rgba(203, 177, 69, 0.1); /* Faint gold grid */
+    --chart-fill: rgba(203, 177, 69, 0.05);
+
+    /* Fonts */
+    --font-heading: "UAV OSD Sans", monospace;
+    --font-body: "Jet Brains Mono", monospace;
+}
+
+/* Restoring the APX Tech-Weave Background */
+[data-theme="apx"] body {
+    background-color: #000000 !important;
+    background-image: 
+        linear-gradient(45deg, #0a0a0a 25%, transparent 25%), 
+        linear-gradient(-45deg, #0a0a0a 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #0a0a0a 75%), 
+        linear-gradient(-45deg, transparent 75%, #0a0a0a 75%),
+        radial-gradient(#1a1a1a 1px, transparent 0);
+    background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, 4px 4px;
+    background-attachment: fixed;
+}
+
+/* Force APX Cards to be solid and have a tech-border */
+[data-theme="apx"] .card, 
+[data-theme="apx"] .stat-card,
+[data-theme="apx"] .telemetry-card {
+    background: #0a0a0a !important; 
+    border: 1px solid var(--apx-gold) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 
+    inset 0 0 15px rgba(203, 177, 69, 0.1) !important;
+    color: var(--text);
+}
+/* APX Tech Buttons */
+[data-theme="apx"] button {
+    background: transparent;
+    border: 1px solid var(--apx-gold);
+    color: var(--apx-gold);
+    font-family: "UAV OSD Sans", monospace;
+    text-transform: uppercase;
+}
+
+[data-theme="apx"] button:hover {
+    background: var(--apx-gold);
+    color: black;
+    box-shadow: 0 0 15px var(--apx-gold);
+}
+
